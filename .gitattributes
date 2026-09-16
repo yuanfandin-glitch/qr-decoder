@@ -1,0 +1,7 @@
+# 统一换行符：仓库内 LF，检出时按平台转换（Windows 为 CRLF）
+* text=auto
+
+*.py   text eol=lf
+*.pyw  text eol=lf
+*.md   text eol=lf
+*.bat  text eol=crlf
