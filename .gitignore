@@ -1,0 +1,18 @@
+# 解析结果（含个人分享链接，不外发）
+qr_result.md
+
+# 代理工作目录（含记忆与笔记）
+.workbuddy-ai/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 运行时临时截图
+_qr_gui_clip.png
+_qr_gui_snip.png
+
+# 系统
+.DS_Store
+Thumbs.db
