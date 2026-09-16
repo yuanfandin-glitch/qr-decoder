@@ -14,7 +14,9 @@ import sys
 
 import cv2
 
-CLIP_DIR = r"C:/Users/Yuan Fanding/.workbuddy-ai/clipboard-images"
+# 剪贴板图片默认目录；换机器时用环境变量 QR_CLIP_DIR 覆盖
+CLIP_DIR = os.environ.get("QR_CLIP_DIR") or os.path.join(
+    os.path.expanduser("~"), ".workbuddy-ai", "clipboard-images")
 
 
 def decode(path):

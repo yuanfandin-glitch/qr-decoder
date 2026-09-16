@@ -3,6 +3,7 @@
 阶段二：框选取屏（模拟鼠标拖拽）-> 校验抓图与回调
 全程自动关闭窗口。
 """
+import glob
 import importlib.util
 import os
 import sys
@@ -13,7 +14,19 @@ spec = importlib.util.spec_from_file_location("qr_gui", os.path.join(HERE, "qr_g
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
-IMG = r"C:/Users/Yuan Fanding/.workbuddy-ai/clipboard-images/clipboard-2026-09-16T14-57-58-514Z-9545122a.png"
+def _latest_clip_image():
+    clip_dir = os.environ.get("QR_CLIP_DIR") or os.path.join(
+        os.path.expanduser("~"), ".workbuddy-ai", "clipboard-images")
+    pngs = glob.glob(os.path.join(clip_dir, "*.png"))
+    return max(pngs, key=os.path.getmtime) if pngs else None
+
+
+# 测试图：优先用命令行参数，其次 QR_SMOKE_IMG 环境变量，最后取剪贴板目录里最新的一张
+IMG = (
+    sys.argv[1] if len(sys.argv) > 1
+    else os.environ.get("QR_SMOKE_IMG")
+    or _latest_clip_image()
+)
 
 root = tk.Tk()
 app = mod.App(root)

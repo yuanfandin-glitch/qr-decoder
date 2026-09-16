@@ -26,7 +26,7 @@
 - 但 **Python 3.14 目前没有 numpy / opencv 的二进制轮子**，直接 `pip install` 会转源码编译，耗时且易失败。
 - 因此：界面在 3.14 上跑，解码通过子进程委托给**装了 opencv + numpy 的 3.13 环境**，结果以 JSON 回传。
 
-如果你只有一套 Python，且它同时具备 tkinter 与 opencv（例如官方安装版 3.12/3.13 + `pip install opencv-python-headless pillow`），可以把 `qr_gui.pyw` 里的 `DECODER_PY` 直接指向该解释器即可，无需改动其他代码。
+如果你只有一套 Python，且它同时具备 tkinter 与 opencv（例如官方安装版 3.12/3.13 + `pip install opencv-python-headless pillow`），那就不需要双环境，程序会自动使用它。
 
 ## 安装
 
@@ -40,15 +40,25 @@ REM 2) GUI 前端环境（需 tkinter + pillow，Windows 官方安装包自带 t
 <venv-gui>\Scripts\pip install pillow
 ```
 
-在 `qr_gui.pyw` 中设置：
+### 环境变量
 
-```python
-DECODER_PY = r"<venv-backend>\Scripts\python.exe"
+代码和启动器里**不写死任何本机路径**，全部靠环境变量定位：
+
+| 变量 | 用途 | 未设置时 |
+|---|---|---|
+| `QR_DECODER_PY` | 解码后端解释器（需 opencv + numpy） | 当前解释器若自带 cv2 就用它，否则找项目内 `venv/` `.venv/` `backend/` |
+| `QR_GUI_PYTHON` | 启动器用的 `pythonw.exe`（需 tkinter + pillow） | 依次回退到 PATH 里的 `pythonw`、`py -3` |
+| `QR_CLIP_DIR` | `decode_qr.py` 无参数时的剪贴板图片目录 | `~/.workbuddy-ai/clipboard-images` |
+| `QR_SMOKE_IMG` | 冒烟测试用的图片 | 剪贴板目录里最新的一张 |
+
+设置一次即可（新开的窗口生效）：
+
+```bat
+setx QR_GUI_PYTHON "<venv-gui>\Scripts\pythonw.exe"
+setx QR_DECODER_PY "<venv-backend>\Scripts\python.exe"
 ```
 
-或设置环境变量 `QR_DECODER_PY` 覆盖，不改代码。
-
-然后按实际路径修改 `启动二维码解码器.bat` 中的 `pythonw.exe` 路径，双击即可运行。
+然后双击 `启动二维码解码器.bat` 运行。若启动时一闪而过，多半是 PATH 里的 `pythonw` 缺 Pillow，按上面两条 `setx` 设置后再试。
 
 ## 命令行用法
 

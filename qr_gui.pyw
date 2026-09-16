@@ -19,10 +19,35 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageGrab, ImageTk
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# 默认指向本机托管 venv；换机器时用环境变量 QR_DECODER_PY 覆盖
-DEFAULT_DECODER_PY = r"C:/Users/Yuan Fanding/.workbuddy-ai/binaries/python/envs/default/Scripts/python.exe"
-DECODER_PY = os.environ.get("QR_DECODER_PY") or DEFAULT_DECODER_PY
 DECODER_SCRIPT = os.path.join(HERE, "decode_qr.py")
+
+
+def resolve_decoder():
+    """找到能跑 decode_qr.py 的解释器（需要 opencv + numpy）。
+
+    顺序：环境变量 QR_DECODER_PY > 当前解释器自带 cv2 > 项目内常见 venv > 放弃。
+    找不到返回 None，界面会提示怎么配，而不是写死某台机器的路径。
+    """
+    env_py = os.environ.get("QR_DECODER_PY")
+    if env_py and os.path.exists(env_py):
+        return env_py
+
+    try:
+        import importlib.util
+        if importlib.util.find_spec("cv2") is not None:
+            return sys.executable
+    except (ImportError, ValueError):
+        pass
+
+    for rel in ("venv", ".venv", "backend", os.path.join("backend", "venv")):
+        for sub in ("Scripts", "bin"):
+            cand = os.path.join(HERE, rel, sub, "python.exe" if sub == "Scripts" else "python")
+            if os.path.exists(cand):
+                return cand
+    return None
+
+
+DECODER_PY = resolve_decoder()
 
 BG = "#f5f6f8"
 CARD = "#ffffff"
@@ -35,10 +60,13 @@ IMG_TYPES = [("图片文件", "*.png *.jpg *.jpeg *.bmp *.gif *.webp *.tif *.tif
 IMG_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".tif", ".tiff")
 
 
+HINT = "设置环境变量 QR_DECODER_PY，指向装了 opencv-python-headless 与 numpy 的 python.exe"
+
+
 def call_decoder(path):
     """调用后端解码，返回 (内容, 解码方式)。"""
-    if not os.path.exists(DECODER_PY):
-        return None, f"找不到解码后端：{DECODER_PY}"
+    if not DECODER_PY:
+        return None, f"未找到解码后端；{HINT}"
     if not os.path.exists(DECODER_SCRIPT):
         return None, f"找不到解码脚本：{DECODER_SCRIPT}"
     try:
@@ -144,6 +172,8 @@ class App:
         self.root.bind("<Control-V>", lambda e: self.from_clipboard())
         self.root.bind("<Control-s>", lambda e: self.snip())
         self.root.bind("<Control-S>", lambda e: self.snip())
+        if not DECODER_PY:
+            self.status.configure(text="未配置解码后端 · " + HINT)
         if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
             self.load_path(sys.argv[1])
 
